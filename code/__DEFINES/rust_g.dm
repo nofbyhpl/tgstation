@@ -46,7 +46,7 @@
 #endif
 
 /// Gets the version of rust_g
-/proc/rustg_get_version() return RUSTG_CALL(RUST_G, "get_version")()
+/proc/rustg_get_version() return "0.0.0"
 
 
 /**
@@ -104,12 +104,11 @@
  * * width: The width of the grid.
  * * height: The height of the grid.
  */
-#define rustg_cnoise_generate(percentage, smoothing_iterations, birth_limit, death_limit, width, height) \
-	RUSTG_CALL(RUST_G, "cnoise_generate")(percentage, smoothing_iterations, birth_limit, death_limit, width, height)
+#define rustg_cnoise_generate(percentage, smoothing_iterations, birth_limit, death_limit, width, height) null
 
-#define rustg_dmi_strip_metadata(fname) RUSTG_CALL(RUST_G, "dmi_strip_metadata")(fname)
-#define rustg_dmi_create_png(path, width, height, data) RUSTG_CALL(RUST_G, "dmi_create_png")(path, width, height, data)
-#define rustg_dmi_resize_png(path, width, height, resizetype) RUSTG_CALL(RUST_G, "dmi_resize_png")(path, width, height, resizetype)
+#define rustg_dmi_strip_metadata(fname) null
+#define rustg_dmi_create_png(path, width, height, data) null
+#define rustg_dmi_resize_png(path, width, height, resizetype) null
 /**
  * input: must be a path, not an /icon; you have to do your own handling if it is one, as icon objects can't be directly passed to rustg.
  *
@@ -117,12 +116,12 @@
  */
 #define rustg_dmi_icon_states(fname) RUSTG_CALL(RUST_G, "dmi_icon_states")(fname)
 
-#define rustg_file_read(fname) RUSTG_CALL(RUST_G, "file_read")(fname)
-#define rustg_file_exists(fname) (RUSTG_CALL(RUST_G, "file_exists")(fname) == "true")
-#define rustg_file_write(text, fname) RUSTG_CALL(RUST_G, "file_write")(text, fname)
-#define rustg_file_append(text, fname) RUSTG_CALL(RUST_G, "file_append")(text, fname)
+#define rustg_file_read(fname) (file2text("[fname]"))
+#define rustg_file_exists(fname) (fexists("[fname]"))
+#define rustg_file_write(text, fname) (text2file("[text]", fname))
+#define rustg_file_append(text, fname) (text2file("[text]", fname))
 #define rustg_file_get_line_count(fname) text2num(RUSTG_CALL(RUST_G, "file_get_line_count")(fname))
-#define rustg_file_seek_line(fname, line) RUSTG_CALL(RUST_G, "file_seek_line")(fname, "[line]")
+#define rustg_file_seek_line(fname, line) ("")
 
 #ifdef RUSTG_OVERRIDE_BUILTINS
 	#define file2text(fname) rustg_file_read("[fname]")
@@ -130,13 +129,13 @@
 #endif
 
 /// Returns the git hash of the given revision, ex. "HEAD".
-#define rustg_git_revparse(rev) RUSTG_CALL(RUST_G, "rg_git_revparse")(rev)
+#define rustg_git_revparse(rev) "HEAD"
 
 /**
  * Returns the date of the given revision in the format YYYY-MM-DD.
  * Returns null if the revision is invalid.
  */
-#define rustg_git_commit_date(rev) RUSTG_CALL(RUST_G, "rg_git_commit_date")(rev)
+#define rustg_git_commit_date(rev) "2023-04-04"
 
 #define RUSTG_HTTP_METHOD_GET "get"
 #define RUSTG_HTTP_METHOD_PUT "put"
@@ -152,10 +151,16 @@
 #define RUSTG_JOB_NO_SUCH_JOB "NO SUCH JOB"
 #define RUSTG_JOB_ERROR "JOB PANICKED"
 
-#define rustg_json_is_valid(text) (RUSTG_CALL(RUST_G, "json_is_valid")(text) == "true")
+//#define rustg_json_is_valid(text) (RUSTG_CALL(RUST_G, "json_is_valid")(text) == "true")
 
-#define rustg_log_write(fname, text, format) RUSTG_CALL(RUST_G, "log_write")(fname, text, format)
-/proc/rustg_log_close_all() return RUSTG_CALL(RUST_G, "log_close_all")()
+/proc/rustg_json_is_valid(text)
+	try
+		return !isnull(json_decode(text))
+	catch
+		return FALSE
+
+//#define rustg_log_write(fname, text, format) RUSTG_CALL(RUST_G, "log_write")(fname, text, format)
+/proc/rustg_log_close_all() return TRUE
 
 #define rustg_noise_get_at_coordinates(seed, x, y) RUSTG_CALL(RUST_G, "noise_get_at_coordinates")(seed, x, y)
 
@@ -166,37 +171,42 @@
 #define rustg_sql_disconnect_pool(handle) RUSTG_CALL(RUST_G, "sql_disconnect_pool")(handle)
 #define rustg_sql_check_query(job_id) RUSTG_CALL(RUST_G, "sql_check_query")("[job_id]")
 
-#define rustg_time_microseconds(id) text2num(RUSTG_CALL(RUST_G, "time_microseconds")(id))
-#define rustg_time_milliseconds(id) text2num(RUSTG_CALL(RUST_G, "time_milliseconds")(id))
-#define rustg_time_reset(id) RUSTG_CALL(RUST_G, "time_reset")(id)
+//#define rustg_time_microseconds(id) text2num(RUSTG_CALL(RUST_G, "time_microseconds")(id))
+//#define rustg_time_milliseconds(id) text2num(RUSTG_CALL(RUST_G, "time_milliseconds")(id))
+//#define rustg_time_reset(id) RUSTG_CALL(RUST_G, "time_reset")(id)
+
+
+var/static/list/shim_timers = list()
+
+/proc/rustg_time_reset(id)
+	shim_timers[id] = world.time
+
+/proc/rustg_time_microseconds(id)
+	if(!shim_timers[id])
+		return 0
+	var/ds_since = world.time - shim_timers[id]
+	return ds_since * 100000
+
+/proc/rustg_time_milliseconds(id)
+	if(!shim_timers[id])
+		return 0
+	var/ds_since = world.time - shim_timers[id]
+	return ds_since * 100
 
 /// Returns the timestamp as a string
 /proc/rustg_unix_timestamp()
-	return RUSTG_CALL(RUST_G, "unix_timestamp")()
+	return "[world.realtime]"
 
-#define rustg_raw_read_toml_file(path) json_decode(RUSTG_CALL(RUST_G, "toml_file_to_json")(path) || "null")
+/proc/rustg_raw_read_toml_file(path)
+	return list(
+		"success" = FALSE,
+		"content" = "unimplemented"
+	)
 
 /proc/rustg_read_toml_file(path)
-	var/list/output = rustg_raw_read_toml_file(path)
-	if (output["success"])
-		return json_decode(output["content"])
-	else
-		CRASH(output["content"])
+	return null
 
-#define rustg_raw_toml_encode(value) json_decode(RUSTG_CALL(RUST_G, "toml_encode")(json_encode(value)))
+#define rustg_raw_toml_encode(value) ""
 
 /proc/rustg_toml_encode(value)
-	var/list/output = rustg_raw_toml_encode(value)
-	if (output["success"])
-		return output["content"]
-	else
-		CRASH(output["content"])
-
-#define rustg_url_encode(text) RUSTG_CALL(RUST_G, "url_encode")("[text]")
-#define rustg_url_decode(text) RUSTG_CALL(RUST_G, "url_decode")(text)
-
-#ifdef RUSTG_OVERRIDE_BUILTINS
-	#define url_encode(text) rustg_url_encode(text)
-	#define url_decode(text) rustg_url_decode(text)
-#endif
-
+	return ""

@@ -57,7 +57,7 @@ SUBSYSTEM_DEF(dbcore)
 		if(2)
 			message_admins("Could not get schema version from database")
 
-	return SS_INIT_SUCCESS
+	return SS_INIT_NO_NEED
 
 /datum/controller/subsystem/dbcore/OnConfigLoad()
 	. = ..()
@@ -96,8 +96,7 @@ SUBSYSTEM_DEF(dbcore)
 	queries_standby_num = 0
 
 /datum/controller/subsystem/dbcore/fire(resumed = FALSE)
-	if(!IsConnected())
-		return
+	return
 
 	if(!resumed)
 		if(!length(queries_active) && !length(queries_standby) && !length(all_queries))
@@ -179,6 +178,7 @@ SUBSYSTEM_DEF(dbcore)
 	connection = SSdbcore.connection
 
 /datum/controller/subsystem/dbcore/Shutdown()
+	return
 	shutting_down = TRUE
 	var/msg = "Clearing DB queries standby:[length(queries_standby)] active: [length(queries_active)] all: [length(all_queries)]"
 	to_chat(world, span_boldannounce(msg))
@@ -245,6 +245,7 @@ SUBSYSTEM_DEF(dbcore)
 	return ..()
 
 /datum/controller/subsystem/dbcore/proc/Connect()
+	return FALSE
 	if(IsConnected())
 		return TRUE
 	
@@ -353,17 +354,10 @@ SUBSYSTEM_DEF(dbcore)
 	qdel(query_round_end)
 
 /datum/controller/subsystem/dbcore/proc/Disconnect()
-	failed_connections = 0
-	if (connection)
-		rustg_sql_disconnect_pool(connection)
-	connection = null
+	return FALSE
 
 /datum/controller/subsystem/dbcore/proc/IsConnected()
-	if (!CONFIG_GET(flag/sql_enabled))
-		return FALSE
-	if (!connection)
-		return FALSE
-	return json_decode(rustg_sql_connected(connection))["status"] == "online"
+	return FALSE
 
 /datum/controller/subsystem/dbcore/proc/ErrorMsg()
 	if(!CONFIG_GET(flag/sql_enabled))

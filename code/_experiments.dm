@@ -16,7 +16,3 @@
 #elif defined(UNIT_TESTS)
 	#define EXPERIMENT_MY_COOL_FEATURE
 #endif
-
-#if DM_VERSION >= 516
-	#error "Remove all 515 experiments"
-#endif
