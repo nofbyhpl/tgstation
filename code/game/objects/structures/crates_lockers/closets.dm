@@ -149,6 +149,7 @@ GLOBAL_LIST_EMPTY(roundstart_station_closets)
 	. = INITIALIZE_HINT_LATELOAD
 
 	populate_contents_immediate()
+	RegisterSignal(src, COMSIG_ATOM_AFTER_SUCCESSFUL_INITIALIZED_ON, PROC_REF(on_atom_initialized_inside))
 	var/static/list/loc_connections = list(
 		COMSIG_LIVING_DISARM_COLLIDE = PROC_REF(locker_living),
 		COMSIG_ATOM_MAGICALLY_UNLOCKED = PROC_REF(on_magic_unlock),
@@ -179,6 +180,11 @@ GLOBAL_LIST_EMPTY(roundstart_station_closets)
 		return internal_air
 	else
 		return ..()
+
+/obj/structure/closet/proc/on_atom_initialized_inside(obj/structure/closet/source, atom/movable/initialized)
+	SIGNAL_HANDLER
+	if(opened)
+		initialized.forceMove(drop_location())
 
 //USE THIS TO FILL IT, NOT INITIALIZE OR NEW
 /obj/structure/closet/proc/PopulateContents()
