@@ -1746,3 +1746,11 @@
 	RETURN_TYPE(/obj/item)
 
 	return src
+
+/**
+ * Returns the ID to be used for numerical stacking in storage.
+ * Basically, if you want items with the same type and name to use some other criteria for what's considered a stack, change this.
+ */
+/obj/item/proc/numerical_stacking_id()
+	SHOULD_CALL_PARENT(FALSE)
+	return "[thing.type]-[thing.name]"

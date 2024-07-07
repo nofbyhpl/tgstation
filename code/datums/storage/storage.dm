@@ -840,15 +840,16 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 
 	for(var/obj/item/thing in real_location)
 		var/total_amnt = 1
+		var/id = thing.numerical_stacking_id()
 
 		if(isstack(thing))
 			var/obj/item/stack/things = thing
 			total_amnt = things.amount
 
-		if(!toreturn["[thing.type]-[thing.name]"])
-			toreturn["[thing.type]-[thing.name]"] = new /datum/numbered_display(thing, total_amnt)
+		if(!toreturn[id])
+			toreturn[id] = new /datum/numbered_display(thing, total_amnt)
 		else
-			var/datum/numbered_display/numberdisplay = toreturn["[thing.type]-[thing.name]"]
+			var/datum/numbered_display/numberdisplay = toreturn[id]
 			numberdisplay.number += total_amnt
 
 	return toreturn
